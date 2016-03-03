@@ -5,10 +5,10 @@
 FROM ubuntu:14.04
 
 
-ENV PYTHONPATH /opt/caffe/python
+ENV PYTHONPATH /opt/caffe-segnet/python
 
 # Add caffe binaries to path
-ENV PATH $PATH:/opt/caffe/.build_release/tools
+ENV PATH $PATH:/opt/caffe-segnet/.build_release/tools
 
 # Get dependencies
 RUN apt-get update && apt-get install -y \
@@ -36,7 +36,8 @@ RUN apt-get update && apt-get install -y \
   python-dev \
   python-pip \
   unzip \
-  wget
+  wget \
+  ipython-notebook
 
 # Use gcc 4.6
 RUN update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-4.6 30 && \
@@ -47,7 +48,7 @@ RUN update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-4.6 30 && \
 
 
 # Clone the Caffe repo
-RUN cd /opt && git clone https://github.com/BVLC/caffe.git
+RUN cd /opt && git clone https://github.com/alexgkendall/caffe-segnet
 
 
 # Glog
@@ -80,7 +81,7 @@ RUN cd /opt && \
   make install
 
 # Build Caffe core
-RUN cd /opt/caffe && \
+RUN cd /opt/caffe-segnet && \
   cp Makefile.config.example Makefile.config && \
    echo "CPU_ONLY := 1" >> Makefile.config && \ 
   echo "CXX := /usr/bin/g++-4.6" >> Makefile.config && \
@@ -94,7 +95,7 @@ ADD caffe-ld-so.conf /etc/ld.so.conf.d/
 RUN ldconfig
 
 # Install python deps
-RUN cd /opt/caffe && \
+RUN cd /opt/caffe-segnet && \
   cat python/requirements.txt | xargs -L 1 sudo pip install
 
 # Numpy include path hack - github.com/BVLC/caffe/wiki/Ubuntu-14.04-VirtualBox-VM
@@ -102,10 +103,12 @@ RUN ln -s /usr/include/python2.7/ /usr/local/include/python2.7 && \
   ln -s /usr/local/lib/python2.7/dist-packages/numpy/core/include/numpy/ /usr/local/include/python2.7/numpy
 
 # Build Caffe python bindings
-RUN cd /opt/caffe && make pycaffe
+RUN cd /opt/caffe-segnet && make pycaffe
 
 
 # Make + run tests
-RUN cd /opt/caffe && make test && make runtest
+RUN cd /opt/caffe-segnet && make test && make runtest
 
+# install tensorflow
+RUN pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.7.1-cp27-none-linux_x86_64.whl
 
